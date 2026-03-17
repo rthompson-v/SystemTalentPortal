@@ -1,7 +1,9 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { authStorage } from "../shared/api/authStorage";
 import { LoginPage } from "../features/auth/pages/LoginPage";
-import { TalentPage } from "../features/talent/pages/TalentPage";
+import { TalentListPage } from "../features/talent/pages/Talentlistpage";
+import { AddTalentPage }  from "../features/talent/pages/Addtalentpage";
+import { EditTalentPage } from "../features/talent/pages/Edittalentpage";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = authStorage.get();
@@ -10,14 +12,41 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 export const router = createBrowserRouter([
-  { path: "/login", element: <LoginPage /> },
+  // ── Public ──────────────────────────────────────────────────────────────────
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+
+  // ── Talent ──────────────────────────────────────────────────────────────────
   {
     path: "/talent",
     element: (
       <PrivateRoute>
-        <TalentPage />
+        <TalentListPage />
       </PrivateRoute>
     ),
   },
-  { path: "*", element: <Navigate to="/talent" replace /> },
+  {
+    path: "/talent/add",
+    element: (
+      <PrivateRoute>
+        <AddTalentPage />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/talent/edit/:id",
+    element: (
+      <PrivateRoute>
+        <EditTalentPage />
+      </PrivateRoute>
+    ),
+  },
+
+  // ── Fallback ─────────────────────────────────────────────────────────────
+  {
+    path: "*",
+    element: <Navigate to="/talent" replace />,
+  },
 ]);
