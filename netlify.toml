@@ -1,7 +1,8 @@
-# Verifica que existe
-ls netlify.toml
+[build]
+  command = "npm run build"
+  publish = "dist"
 
-# Si no está, agrégalo y sube
-git add netlify.toml
-git commit -m "fix: add netlify redirects for React Router"
-git push
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
