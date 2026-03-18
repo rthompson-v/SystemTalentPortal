@@ -2,13 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useCreateTalent } from "../hooks";
 import TalentLayout from "../components/TalentLayout";
 import TalentForm from "../components/TalentForm";
-import type { TalentFormData } from "../types";
+import type { CreateTalent } from "../types";
 
 export function AddTalentPage() {
   const navigate = useNavigate();
-  const create = useCreateTalent();
+  const create   = useCreateTalent();
 
-  const handleSubmit = async (data: TalentFormData) => {
+  const handleSubmit = async (data: CreateTalent) => {
     await create.mutateAsync(data);
     navigate("/talent");
   };
@@ -16,7 +16,7 @@ export function AddTalentPage() {
   return (
     <TalentLayout>
       <div className="max-w-[1000px] mx-auto px-6 py-8">
-        {/* Page header */}
+        {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => navigate("/talent")}
@@ -29,23 +29,24 @@ export function AddTalentPage() {
             Alta de Talento
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">
-            Register a new candidate and their professional details in the system.
+            Registra un nuevo candidato y sus detalles profesionales.
           </p>
         </div>
 
-        {/* Error banner */}
+        {/* Error de API */}
         {create.isError && (
           <div className="mb-6 flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>error</span>
-            <p className="text-sm font-medium">Error saving candidate. Please try again.</p>
+            <p className="text-sm font-medium">Error al guardar el candidato. Intenta de nuevo.</p>
           </div>
         )}
 
         <TalentForm
           onSubmit={handleSubmit}
           onCancel={() => navigate("/talent")}
-          submitLabel={create.isPending ? "Saving…" : "Register Talent"}
+          submitLabel="Register Talent"
           isEditing={false}
+          isPending={create.isPending}
         />
       </div>
     </TalentLayout>

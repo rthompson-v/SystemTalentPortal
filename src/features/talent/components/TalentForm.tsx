@@ -1,71 +1,56 @@
-import { useState } from 'react';
-import type { TalentFormData, EnglishLevel, WorkScheme, VisaStatus, PrimaryRole } from '../types';
+import { useState } from "react";
+import type { CreateTalent } from "../types";
 
-const ROLES: PrimaryRole[] = [
-  'Frontend Developer',
-  'Backend Developer',
-  'Fullstack Developer',
-  'Fullstack Engineer',
-  'UI/UX Designer',
-  'Project Manager',
-  'QA Analyst',
+const ROLES = [
+  "Frontend Developer",
+  "Backend Developer",
+  "Fullstack Developer",
+  "Fullstack Engineer",
+  "UI/UX Designer",
+  "Project Manager",
+  "QA Analyst",
 ];
 
-const ENGLISH_LEVELS: EnglishLevel[] = [
-  'A1 - Beginner',
-  'A2 - Elementary',
-  'B1 - Intermediate',
-  'B2 - Upper Intermediate',
-  'C1 - Advanced',
-  'C2 - Proficient',
-];
+const WORK_SCHEMES = ["Remote", "Hybrid", "On-site", "Flexible"];
 
-const WORK_SCHEMES: WorkScheme[] = ['Remote', 'Hybrid', 'On-site', 'Flexible'];
-
-const DEFAULT_FORM: TalentFormData = {
-  fullName: '',
-  email: '',
-  phone: '',
-  location: '',
-  primaryRole: 'Frontend Developer',
-  techStack: '',
-  yearsOfExperience: 0,
-  modules: '',
-  englishLevel: 'B1 - Intermediate',
-  linkedinUrl: '',
-  cvFileName: '',
-  salaryExpectation: '',
-  hourlyRate: '',
-  workScheme: 'Remote',
-  visaStatus: 'No',
-  isBlacklisted: false,
+const DEFAULT_FORM: CreateTalent = {
+  Nombre:       "",
+  Telefono:     "",
+  Email:        "",
+  Rol:          "",
+  Skillset:     "",
+  EnglishLevel: undefined,
+  Experiencia:  undefined,
+  Location:     "",
+  Visa:         "No",
+  Esquema:      "Remote",
+  Expectativas: "",
+  CV:           "",
+  Tecnologia:   "",
 };
 
-// ── Shared input classes ──────────────────────────────────────────────────────
-const inputCls =
-  'w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-transparent outline-none transition-all text-sm';
-const labelCls = 'block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5';
+// ── Estilos compartidos ───────────────────────────────────────────────────────
+const inputCls = (error?: string) =>
+  `w-full px-4 py-3 rounded-lg border ${
+    error
+      ? "border-red-400 dark:border-red-500 focus:ring-red-400"
+      : "border-slate-200 dark:border-slate-700 focus:ring-[#135bec]"
+  } bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:border-transparent outline-none transition-all text-sm`;
+
+const labelCls = "block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5";
 
 interface Props {
-  initialData?: Partial<TalentFormData>;
-  onSubmit: (data: TalentFormData) => void;
-  onCancel: () => void;
+  initialData?: Partial<CreateTalent>;
+  onSubmit:     (data: CreateTalent) => void;
+  onCancel:     () => void;
   submitLabel?: string;
-  isEditing?: boolean;
-  /** Extra info shown below the form (e.g. "Last updated by…") */
-  footerNote?: string;
+  isEditing?:   boolean;
+  footerNote?:  string;
+  isPending?:   boolean;
 }
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
-function Section({
-  icon,
-  title,
-  children,
-}: {
-  icon: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
   return (
     <section className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
       <div className="flex items-center gap-3 mb-6 text-[#135bec]">
@@ -77,304 +62,385 @@ function Section({
   );
 }
 
+// ── Error message ─────────────────────────────────────────────────────────────
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
+      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>error</span>
+      {msg}
+    </p>
+  );
+}
+
+// ── Validation ────────────────────────────────────────────────────────────────
+type Errors = Partial<Record<keyof CreateTalent, string>>;
+
+function validate(form: CreateTalent): Errors {
+  const e: Errors = {};
+  if (!form.Nombre?.trim())                          e.Nombre       = "El nombre es requerido";
+  if (!form.Email?.trim())                           e.Email        = "El email es requerido";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.Email)) e.Email = "Email inválido";
+  if (!form.Telefono?.trim())                        e.Telefono     = "El teléfono es requerido";
+  if (!form.Rol?.trim())                             e.Rol          = "El rol es requerido";
+  if (!form.Location?.trim())                        e.Location     = "La ubicación es requerida";
+  if (!form.Skillset || String(form.Skillset).trim() === "") e.Skillset = "El skillset es requerido";
+  if (!form.Tecnologia || String(form.Tecnologia).trim() === "") e.Tecnologia = "La tecnología es requerida";
+  if (form.EnglishLevel === undefined || form.EnglishLevel === null || String(form.EnglishLevel) === "")
+    e.EnglishLevel = "El nivel de inglés es requerido";
+  else if (Number(form.EnglishLevel) < 0 || Number(form.EnglishLevel) > 100)
+    e.EnglishLevel = "Debe ser un valor entre 0 y 100";
+  if (form.Experiencia === undefined || form.Experiencia === null || String(form.Experiencia) === "")
+    e.Experiencia = "Los años de experiencia son requeridos";
+  else if (Number(form.Experiencia) < 0)
+    e.Experiencia = "Debe ser un valor positivo";
+  if (!form.Esquema?.trim())                         e.Esquema      = "El esquema de trabajo es requerido";
+  return e;
+}
+
 export default function TalentForm({
   initialData,
   onSubmit,
   onCancel,
-  submitLabel = 'Register Talent',
-  isEditing = false,
+  submitLabel = "Register Talent",
+  isEditing   = false,
   footerNote,
+  isPending   = false,
 }: Props) {
-  const [form, setForm] = useState<TalentFormData>({ ...DEFAULT_FORM, ...initialData });
+  const [form, setForm]     = useState<CreateTalent>({ ...DEFAULT_FORM, ...initialData });
+  const [errors, setErrors] = useState<Errors>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof CreateTalent, boolean>>>({});
 
-  const set = <K extends keyof TalentFormData>(key: K, value: TalentFormData[K]) =>
-    setForm(prev => ({ ...prev, [key]: value }));
+  const set = <K extends keyof CreateTalent>(key: K, value: CreateTalent[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    // Limpiar error del campo al modificarlo
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
+  const touch = (key: keyof CreateTalent) =>
+    setTouched((prev) => ({ ...prev, [key]: true }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const errs = validate(form);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      // Marcar todos como tocados para mostrar errores
+      const allTouched = Object.keys(errs).reduce(
+        (acc, k) => ({ ...acc, [k]: true }),
+        {} as typeof touched
+      );
+      setTouched(allTouched);
+      return;
+    }
     onSubmit(form);
   };
 
+  const err = (key: keyof CreateTalent) => (touched[key] ? errors[key] : undefined);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} noValidate className="space-y-8">
+
       {/* ── Personal Information ── */}
       <Section icon="person" title="Personal Information">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className={labelCls}>Full Name</label>
+
+          {/* Nombre */}
+          <div className="md:col-span-2">
+            <label className={labelCls}>
+              Nombre completo <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputCls}
+              className={inputCls(err("Nombre"))}
               type="text"
               placeholder="e.g. John Doe"
-              value={form.fullName}
-              onChange={e => set('fullName', e.target.value)}
-              required
+              value={form.Nombre}
+              onChange={(e) => set("Nombre", e.target.value)}
+              onBlur={() => touch("Nombre")}
             />
+            <FieldError msg={err("Nombre")} />
           </div>
+
+          {/* Email */}
           <div>
-            <label className={labelCls}>Email Address</label>
+            <label className={labelCls}>
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputCls}
+              className={inputCls(err("Email"))}
               type="email"
               placeholder="john.doe@example.com"
-              value={form.email}
-              onChange={e => set('email', e.target.value)}
-              required
+              value={form.Email ?? ""}
+              onChange={(e) => set("Email", e.target.value)}
+              onBlur={() => touch("Email")}
             />
+            <FieldError msg={err("Email")} />
           </div>
+
+          {/* Teléfono */}
           <div>
-            <label className={labelCls}>Phone Number</label>
+            <label className={labelCls}>
+              Teléfono <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputCls}
+              className={inputCls(err("Telefono"))}
               type="tel"
-              placeholder="+1 (555) 000-0000"
-              value={form.phone}
-              onChange={e => set('phone', e.target.value)}
+              placeholder="+52 55 0000 0000"
+              value={form.Telefono ?? ""}
+              onChange={(e) => set("Telefono", e.target.value)}
+              onBlur={() => touch("Telefono")}
             />
+            <FieldError msg={err("Telefono")} />
           </div>
-          <div>
-            <label className={labelCls}>Location</label>
-            <input
-              className={inputCls}
-              type="text"
-              placeholder="City, Country"
-              value={form.location}
-              onChange={e => set('location', e.target.value)}
-            />
-          </div>
-        </div>
-      </Section>
 
-      {/* ── Professional Profile ── */}
-      <Section icon="work" title={isEditing ? 'Role & Experience' : 'Professional Profile'}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Location */}
           <div>
-            <label className={labelCls}>Primary Role</label>
-            <select
-              className={inputCls}
-              value={form.primaryRole}
-              onChange={e => set('primaryRole', e.target.value as PrimaryRole)}
-            >
-              {ROLES.map(r => <option key={r}>{r}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Core Technology / Stack</label>
+            <label className={labelCls}>
+              Ubicación <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputCls}
+              className={inputCls(err("Location"))}
               type="text"
-              placeholder="React, Node.js, AWS…"
-              value={form.techStack}
-              onChange={e => set('techStack', e.target.value)}
+              placeholder="Ciudad, País"
+              value={form.Location ?? ""}
+              onChange={(e) => set("Location", e.target.value)}
+              onBlur={() => touch("Location")}
             />
+            <FieldError msg={err("Location")} />
           </div>
-          <div>
-            <label className={labelCls}>Years of Experience</label>
-            <input
-              className={inputCls}
-              type="number"
-              min={0}
-              placeholder="0"
-              value={form.yearsOfExperience}
-              onChange={e => set('yearsOfExperience', Number(e.target.value))}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className={labelCls}>Specific Modules / Expertise</label>
-            <textarea
-              className={`${inputCls} h-24 resize-none`}
-              placeholder="SAP FI/CO, AWS Infrastructure, E-commerce…"
-              value={form.modules}
-              onChange={e => set('modules', e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>English Level</label>
-            <select
-              className={inputCls}
-              value={form.englishLevel}
-              onChange={e => set('englishLevel', e.target.value as EnglishLevel)}
-            >
-              {ENGLISH_LEVELS.map(l => <option key={l}>{l}</option>)}
-            </select>
-          </div>
-        </div>
-      </Section>
 
-      {/* ── Links & Attachments ── */}
-      <Section icon="link" title="Links & Attachments">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* LinkedIn */}
           <div>
-            <label className={labelCls}>LinkedIn Profile URL</label>
+            <label className={labelCls}>LinkedIn</label>
             <div className="relative">
-              <span
-                className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                style={{ fontSize: 18 }}
-              >
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }}>
                 link
               </span>
               <input
-                className={`${inputCls} pl-10`}
+                className={`${inputCls()} pl-10`}
                 type="url"
                 placeholder="https://linkedin.com/in/username"
-                value={form.linkedinUrl}
-                onChange={e => set('linkedinUrl', e.target.value)}
+                value={form.CV ?? ""}
+                onChange={(e) => set("CV", e.target.value)}
               />
             </div>
           </div>
 
+        </div>
+      </Section>
+
+      {/* ── Professional Profile ── */}
+      <Section icon="work" title={isEditing ? "Role & Experience" : "Professional Profile"}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {/* Rol */}
           <div>
-            <label className={labelCls}>Resume / CV</label>
-            {isEditing && form.cvFileName ? (
-              <div className="flex items-center gap-3 p-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
-                <span className="material-symbols-outlined text-[#135bec]" style={{ fontSize: 20 }}>description</span>
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{form.cvFileName}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Current CV file</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => set('cvFileName', '')}
-                  className="text-slate-400 hover:text-red-500 transition-colors"
-                  title="Remove"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>delete</span>
-                </button>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                <span className="material-symbols-outlined text-slate-400 mb-1" style={{ fontSize: 28 }}>cloud_upload</span>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold">Click to upload CV</p>
-                <p className="text-xs text-slate-400 mt-1">PDF, DOCX (Max 10 MB)</p>
-                <input
-                  type="file"
-                  accept=".pdf,.docx"
-                  className="hidden"
-                  onChange={e => set('cvFileName', e.target.files?.[0]?.name ?? '')}
-                />
-              </label>
-            )}
+            <label className={labelCls}>
+              Rol Principal <span className="text-red-500">*</span>
+            </label>
+            <select
+              className={inputCls(err("Rol"))}
+              value={form.Rol ?? ""}
+              onChange={(e) => set("Rol", e.target.value)}
+              onBlur={() => touch("Rol")}
+            >
+              <option value="">Seleccionar rol…</option>
+              {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <FieldError msg={err("Rol")} />
           </div>
+
+          {/* Tecnología */}
+          <div>
+            <label className={labelCls}>
+              Tecnología principal <span className="text-red-500">*</span>
+            </label>
+            <input
+              className={inputCls(err("Tecnologia"))}
+              type="text"
+              placeholder="React, Node.js, SAP…"
+              value={String(form.Tecnologia ?? "")}
+              onChange={(e) => set("Tecnologia", e.target.value)}
+              onBlur={() => touch("Tecnologia")}
+            />
+            <FieldError msg={err("Tecnologia")} />
+          </div>
+
+          {/* Experiencia */}
+          <div>
+            <label className={labelCls}>
+              Años de experiencia <span className="text-red-500">*</span>
+            </label>
+            <input
+              className={inputCls(err("Experiencia"))}
+              type="number"
+              min={0}
+              placeholder="0"
+              value={form.Experiencia ?? ""}
+              onChange={(e) => set("Experiencia", e.target.value === "" ? undefined : Number(e.target.value))}
+              onBlur={() => touch("Experiencia")}
+            />
+            <FieldError msg={err("Experiencia")} />
+          </div>
+
+          {/* Skillset */}
+          <div className="md:col-span-2">
+            <label className={labelCls}>
+              Skillset <span className="text-red-500">*</span>
+              <span className="ml-1 font-normal text-slate-400 text-xs">(separado por comas)</span>
+            </label>
+            <textarea
+              className={`${inputCls(err("Skillset"))} h-24 resize-none`}
+              placeholder="React, Tailwind, Node.js, AWS…"
+              value={String(form.Skillset ?? "")}
+              onChange={(e) => set("Skillset", e.target.value)}
+              onBlur={() => touch("Skillset")}
+            />
+            <FieldError msg={err("Skillset")} />
+          </div>
+
+          {/* English Level */}
+          <div>
+            <label className={labelCls}>
+              English Score (0–100) <span className="text-red-500">*</span>
+            </label>
+            <input
+              className={inputCls(err("EnglishLevel"))}
+              type="number"
+              min={0}
+              max={100}
+              placeholder="75"
+              value={form.EnglishLevel ?? ""}
+              onChange={(e) => set("EnglishLevel", e.target.value === "" ? undefined : Number(e.target.value))}
+              onBlur={() => touch("EnglishLevel")}
+            />
+            {/* Score → CEFR helper */}
+            {form.EnglishLevel !== undefined && form.EnglishLevel !== null && (
+              <p className="mt-1.5 text-xs text-slate-400">
+                Equivale a:{" "}
+                <span className="font-semibold text-[#135bec]">
+                  {form.EnglishLevel >= 90 ? "C2" :
+                   form.EnglishLevel >= 80 ? "C1" :
+                   form.EnglishLevel >= 70 ? "B2" :
+                   form.EnglishLevel >= 55 ? "B1" :
+                   form.EnglishLevel >= 40 ? "A2" : "A1"}
+                </span>
+              </p>
+            )}
+            <FieldError msg={err("EnglishLevel")} />
+          </div>
+
         </div>
       </Section>
 
       {/* ── Expectations & Logistics ── */}
       <Section icon="payments" title="Expectations & Logistics">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {/* Esquema */}
           <div>
-            <label className={labelCls}>Salary Expectations (Monthly USD)</label>
+            <label className={labelCls}>
+              Esquema de trabajo <span className="text-red-500">*</span>
+            </label>
+            <select
+              className={inputCls(err("Esquema"))}
+              value={form.Esquema ?? ""}
+              onChange={(e) => set("Esquema", e.target.value)}
+              onBlur={() => touch("Esquema")}
+            >
+              <option value="">Seleccionar…</option>
+              {WORK_SCHEMES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <FieldError msg={err("Esquema")} />
+          </div>
+
+          {/* Expectativas salariales */}
+          <div>
+            <label className={labelCls}>Expectativa salarial (USD/mes)</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
               <input
-                className={`${inputCls} pl-7`}
+                className={`${inputCls()} pl-7`}
                 type="text"
                 placeholder="5,000"
-                value={form.salaryExpectation}
-                onChange={e => set('salaryExpectation', e.target.value)}
+                value={form.Expectativas ?? ""}
+                onChange={(e) => set("Expectativas", e.target.value)}
               />
             </div>
           </div>
 
-          {isEditing && (
-            <div>
-              <label className={labelCls}>Hourly Rate (Optional)</label>
-              <input
-                className={inputCls}
-                type="text"
-                placeholder="35"
-                value={form.hourlyRate ?? ''}
-                onChange={e => set('hourlyRate', e.target.value)}
-              />
-            </div>
-          )}
-
+          {/* Visa */}
           <div>
-            <label className={labelCls}>Work Scheme</label>
-            <select
-              className={inputCls}
-              value={form.workScheme}
-              onChange={e => set('workScheme', e.target.value as WorkScheme)}
-            >
-              {WORK_SCHEMES.map(s => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label className={labelCls}>US Visa Status</label>
+            <label className={labelCls}>US Visa</label>
             <div className="flex items-center gap-5 py-3">
-              {(['Yes', 'No', 'In Progress'] as VisaStatus[]).map(v => (
+              {(["Yes", "No", "In Progress"] as const).map((v) => (
                 <label key={v} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
                     name="visa"
+                    value={v}
                     className="w-4 h-4 accent-[#135bec]"
-                    checked={form.visaStatus === v}
-                    onChange={() => set('visaStatus', v)}
+                    checked={form.Visa === v}
+                    onChange={() => set("Visa", v)}
                   />
                   <span className="text-sm dark:text-slate-300">{v}</span>
                 </label>
               ))}
             </div>
           </div>
+
         </div>
       </Section>
 
-      {/* ── Status (Edit only) ── */}
-      {isEditing && (
-        <Section icon="verified_user" title="Status & Flags">
-          <div className="flex flex-wrap gap-6 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-5 h-5 rounded accent-[#135bec]"
-                checked={form.visaStatus === 'Yes'}
-                onChange={e => set('visaStatus', e.target.checked ? 'Yes' : 'No')}
-              />
-              <div>
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">US Visa Holder</p>
-                <p className="text-xs text-slate-500">Candidate has a valid B1/B2 Visa</p>
-              </div>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-5 h-5 rounded accent-red-500"
-                checked={form.isBlacklisted}
-                onChange={e => set('isBlacklisted', e.target.checked)}
-              />
-              <div>
-                <p className="text-sm font-bold text-red-600">Blacklist Status</p>
-                <p className="text-xs text-slate-500">Flag for internal restrictions</p>
-              </div>
-            </label>
+      {/* ── Resumen de errores (si intentó enviar con errores) ── */}
+      {Object.keys(errors).length > 0 && Object.keys(touched).length > 0 && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
+          <span className="material-symbols-outlined shrink-0 mt-0.5" style={{ fontSize: 20 }}>error</span>
+          <div>
+            <p className="text-sm font-semibold">Por favor corrige los siguientes campos:</p>
+            <ul className="mt-1 text-xs space-y-0.5 list-disc list-inside">
+              {Object.values(errors).filter(Boolean).map((msg, i) => (
+                <li key={i}>{msg}</li>
+              ))}
+            </ul>
           </div>
-        </Section>
+        </div>
       )}
 
       {/* ── Action Buttons ── */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-12 border-t border-slate-200 dark:border-slate-800">
-        {footerNote ? (
-          <p className="text-slate-500 dark:text-slate-500 text-sm italic">{footerNote}</p>
-        ) : (
-          <span />
-        )}
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        {footerNote
+          ? <p className="text-slate-500 dark:text-slate-500 text-sm italic">{footerNote}</p>
+          : <span />
+        }
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <button
             type="button"
             onClick={onCancel}
             className="w-full sm:w-auto px-8 py-3 rounded-lg font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            {isEditing ? 'Discard Changes' : 'Discard Draft'}
+            {isEditing ? "Discard Changes" : "Discard Draft"}
           </button>
           <button
             type="submit"
-            className="w-full sm:w-auto px-10 py-3 rounded-lg font-bold text-white bg-[#135bec] hover:bg-[#135bec]/90 shadow-lg shadow-[#135bec]/20 transition-all flex items-center justify-center gap-2"
+            disabled={isPending}
+            className="w-full sm:w-auto px-10 py-3 rounded-lg font-bold text-white bg-[#135bec] hover:bg-[#135bec]/90 shadow-lg shadow-[#135bec]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>save</span>
-            {submitLabel}
+            {isPending ? (
+              <>
+                <span className="material-symbols-outlined animate-spin" style={{ fontSize: 18 }}>progress_activity</span>
+                Guardando…
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>save</span>
+                {submitLabel}
+              </>
+            )}
           </button>
         </div>
       </div>
+
     </form>
   );
 }
