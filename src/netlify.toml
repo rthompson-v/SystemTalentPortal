@@ -1,0 +1,7 @@
+# Verifica que existe
+ls netlify.toml
+
+# Si no está, agrégalo y sube
+git add netlify.toml
+git commit -m "fix: add netlify redirects for React Router"
+git push
