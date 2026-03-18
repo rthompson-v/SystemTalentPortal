@@ -2,19 +2,104 @@ import { useState } from "react";
 import type { CreateTalent } from "../types";
 
 const ROLES = [
-  "Frontend Developer",
-  "Backend Developer",
-  "Fullstack Developer",
-  "Fullstack Engineer",
-  "UI/UX Designer",
+  "Account Executive",
+  "Administrator",
+  "Adobe Analytics",
+  "Analyst",
+  "Architect",
+  "Associate Customer Sucess Manager",
+  "Associate Sales Engineer",
+  "Brand Partner",
+  "Business Analyst",
+  "Business Development Representative",
+  "Business Development Representative Manager",
+  "Channel Account Manager",
+  "Chief Manager",
+  "Cloud Engineer",
+  "Consultant",
+  "Contracting Specialist",
+  "Customer Success Engineer",
+  "Customer Success Manager",
+  "Customer Support Engineer",
+  "Cybersecurity",
+  "DBA",
+  "DBA / Administrator",
+  "DBA / Architect",
+  "Data Analyst",
+  "Data Analytics",
+  "Data Engineer",
+  "Data Scientist",
+  "Designer",
+  "Developer",
+  "Developer/Project Leader",
+  "Developer/Technical Leader",
+  "End User",
+  "Engagement Lead",
+  "Engineer",
+  "FinOps Lead",
+  "Functional",
+  "Functional / Developer / Architect",
+  "GTM Partner Manager",
+  "Information Security",
+  "Information Technology Coordinator",
+  "LLM Data Engineer",
+  "Lead Data Engineer",
+  "Lead Developer",
+  "Major Incident Management",
+  "Manager",
+  "Mobile Engineer",
+  "Platform Administrator",
+  "Point of Sales Technician",
+  "Production Support Engineer",
+  "Project Leader",
   "Project Manager",
-  "QA Analyst",
+  "QA",
+  "Regional Sales Director",
+  "Release Manager",
+  "SQL Admin",
+  "Sales",
+  "Sales Engineer",
+  "Scrum Master",
+  "Senior Technical Support Engineer",
+  "Site Reliability Engineer",
+  "Software Asset Managament",
+  "Software Engineer",
+  "Solutions Architect",
+  "Solutions Engineer",
+  "Specialist",
+  "Sr. Business & Information Analyst",
+  "Support Coordinator",
+  "Support Engineer Manager",
+  "Talent Acquisition Specialist",
+  "Technical",
+  "Technical Functional",
+  "Technical Leader",
+  "Technical Product Manager",
+  "Technical Project Manager",
+  "Technical Support",
+  "Technical Support Analyst",
+  "Technical Support Engineer II",
+  "Tester",
+  "Vulnerability Remediation Specialist",
 ];
 
 const WORK_SCHEMES = ["Remote", "Hybrid", "On-site", "Flexible"];
 
+const TECHNOLOGIES = [
+  "AI", "AP/AR", "AWS", "AWS Infra", "Adobe", "Android", "Angular",
+  "Business Intelligence", "CRM", "Citrix", "Cognos", "DataBricks", "DataDog",
+  "DataStage Integration", "DevOps", "EDI", "ETL", "Financial", "GEP", "Groovy",
+  "HR", "IBP", "IOS", "IT", "Infor", "Infor LN", "Infor M3", "Infor WMS",
+  "Informatica", "Infraestructure", "JDA", "Java", "Kafka", "MAC", "Marketing SEO",
+  "Microsoft", "Mobile", "Oracle", "Oracle / SQL", "Oracle EBS",
+  "Organizational Change Management", "PEGA", "Parts Management", "Progress",
+  "Python", "QA", "QAD", "Ride Command", "Ruby On Rails", "SAP", "SOA",
+  "Salesforce", "Servicenow", "Snowflake", "Solumina", "TIBCO", "UI/UX", "Web",
+  "Web Developer", "Windchill", "Windows Server / IT Analyst", "Workday",
+];
+
 const DEFAULT_FORM: CreateTalent = {
-  Nombre:       "",
+  Name:       "",
   Telefono:     "",
   Email:        "",
   Rol:          "",
@@ -78,7 +163,7 @@ type Errors = Partial<Record<keyof CreateTalent, string>>;
 
 function validate(form: CreateTalent): Errors {
   const e: Errors = {};
-  if (!form.Nombre?.trim())                          e.Nombre       = "El nombre es requerido";
+  if (!form.Name?.trim())                          e.Name       = "El nombre es requerido";
   if (!form.Email?.trim())                           e.Email        = "El email es requerido";
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.Email)) e.Email = "Email inválido";
   if (!form.Telefono?.trim())                        e.Telefono     = "El teléfono es requerido";
@@ -151,14 +236,14 @@ export default function TalentForm({
               Nombre completo <span className="text-red-500">*</span>
             </label>
             <input
-              className={inputCls(err("Nombre"))}
+              className={inputCls(err("Name"))}
               type="text"
               placeholder="e.g. John Doe"
-              value={form.Nombre}
-              onChange={(e) => set("Nombre", e.target.value)}
-              onBlur={() => touch("Nombre")}
+              value={form.Name}
+              onChange={(e) => set("Name", e.target.value)}
+              onBlur={() => touch("Name")}
             />
-            <FieldError msg={err("Nombre")} />
+            <FieldError msg={err("Name")} />
           </div>
 
           {/* Email */}
@@ -255,14 +340,15 @@ export default function TalentForm({
             <label className={labelCls}>
               Tecnología principal <span className="text-red-500">*</span>
             </label>
-            <input
+            <select
               className={inputCls(err("Tecnologia"))}
-              type="text"
-              placeholder="React, Node.js, SAP…"
               value={String(form.Tecnologia ?? "")}
               onChange={(e) => set("Tecnologia", e.target.value)}
               onBlur={() => touch("Tecnologia")}
-            />
+            >
+              <option value="">Seleccionar tecnología…</option>
+              {TECHNOLOGIES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
             <FieldError msg={err("Tecnologia")} />
           </div>
 
