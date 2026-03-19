@@ -1,15 +1,8 @@
 import { http } from "../../shared/api/http";
-import type { Talent, CreateTalent, UpdateTalent, CatalogItem } from "./types";
-
-// ── Tipos de respuesta ────────────────────────────────────────────────────────
-export interface PaginatedResponse {
-  ok:         boolean;
-  data:       Talent[];
-  page:       number;
-  limit:      number;
-  total:      number;
-  totalPages: number;
-}
+import type {
+  Talent, CreateTalent, UpdateTalent, CatalogItem,
+  PaginatedResponse, SearchPayload, SearchResponse,
+} from "./types";
 
 interface SingleResponse  { ok: boolean; data: { candidate: Talent } }
 interface UpdateResponse  { ok: boolean; candidate_code: string; message: string }
@@ -24,7 +17,16 @@ export async function listTalentApi(page = 1, limit = 20): Promise<PaginatedResp
   return data;
 }
 
-// ── Detalle por código ────────────────────────────────────────────────────────
+// ── Búsqueda avanzada ─────────────────────────────────────────────────────────
+export async function searchTalentApi(payload: SearchPayload): Promise<SearchResponse> {
+  const { data } = await http.post<SearchResponse>("/candidates/search", {
+    q:     payload.q     ?? "",
+    limit: payload.limit ?? 50,
+  });
+  return data;
+}
+
+// ── Detalle ───────────────────────────────────────────────────────────────────
 export async function getTalentApi(candidate_code: string): Promise<Talent> {
   const { data } = await http.get<SingleResponse>(`/candidates/${candidate_code}`);
   return data.data.candidate;
@@ -61,5 +63,24 @@ export async function getLocationsApi(): Promise<CatalogItem[]> {
 
 export async function getTechnologiesApi(): Promise<CatalogItem[]> {
   const { data } = await http.get<CatalogResponse>("/candidates/catalogs/technologies");
+  return data.data;
+}
+
+export async function getHiringPreferencesApi(): Promise<CatalogItem[]> {
+  const { data } = await http.get<CatalogResponse>("/candidates/catalogs/hiring-preferences");
+  return data.data;
+}
+
+export async function getModulesApi(technology_id: number): Promise<CatalogItem[]> {
+  const { data } = await http.get<CatalogResponse>(
+    `/candidates/catalogs/technologies/${technology_id}/modules`
+  );
+  return data.data;
+}
+
+export async function getSubmodulesApi(module_id: number): Promise<CatalogItem[]> {
+  const { data } = await http.get<CatalogResponse>(
+    `/candidates/catalogs/modules/${module_id}/submodules`
+  );
   return data.data;
 }

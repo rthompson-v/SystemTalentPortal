@@ -1,5 +1,7 @@
 import { useState } from "react";
-import type { CreateTalent } from "../types";
+import { useHiringPreferences } from "../hooks";
+import StackBuilder from "./StackBuilder";
+import type { CreateTalent, ModuloInput } from "../types";
 
 const ROLES = [
   "Account Executive",
@@ -83,20 +85,8 @@ const ROLES = [
   "Vulnerability Remediation Specialist",
 ];
 
-const WORK_SCHEMES = ["Remote", "Hybrid", "On-site", "Flexible"];
 
-const TECHNOLOGIES = [
-  "AI", "AP/AR", "AWS", "AWS Infra", "Adobe", "Android", "Angular",
-  "Business Intelligence", "CRM", "Citrix", "Cognos", "DataBricks", "DataDog",
-  "DataStage Integration", "DevOps", "EDI", "ETL", "Financial", "GEP", "Groovy",
-  "HR", "IBP", "IOS", "IT", "Infor", "Infor LN", "Infor M3", "Infor WMS",
-  "Informatica", "Infraestructure", "JDA", "Java", "Kafka", "MAC", "Marketing SEO",
-  "Microsoft", "Mobile", "Oracle", "Oracle / SQL", "Oracle EBS",
-  "Organizational Change Management", "PEGA", "Parts Management", "Progress",
-  "Python", "QA", "QAD", "Ride Command", "Ruby On Rails", "SAP", "SOA",
-  "Salesforce", "Servicenow", "Snowflake", "Solumina", "TIBCO", "UI/UX", "Web",
-  "Web Developer", "Windchill", "Windows Server / IT Analyst", "Workday",
-];
+
 
 const DEFAULT_FORM: CreateTalent = {
   Name:       "",
@@ -108,10 +98,11 @@ const DEFAULT_FORM: CreateTalent = {
   Experiencia:  undefined,
   Location:     "",
   Visa:         "No",
-  Esquema:      "Remote",
+  HiringPreference: "",
   Expectativas: "",
   CV:           "",
   Tecnologia:   "",
+  Modulos:      [],
 };
 
 // ── Estilos compartidos ───────────────────────────────────────────────────────
@@ -179,7 +170,7 @@ function validate(form: CreateTalent): Errors {
     e.Experiencia = "Los años de experiencia son requeridos";
   else if (Number(form.Experiencia) < 0)
     e.Experiencia = "Debe ser un valor positivo";
-  if (!form.Esquema?.trim())                         e.Esquema      = "El esquema de trabajo es requerido";
+  if (!form.HiringPreference?.trim())                e.HiringPreference = "La preferencia de contratación es requerida";
   return e;
 }
 
@@ -193,6 +184,8 @@ export default function TalentForm({
   isPending   = false,
 }: Props) {
   const [form, setForm]     = useState<CreateTalent>({ ...DEFAULT_FORM, ...initialData });
+  const { data: hiringPrefs = [] } = useHiringPreferences();
+  const [stack, setStack] = useState<ModuloInput[]>((initialData?.Modulos as ModuloInput[]) ?? []);
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof CreateTalent, boolean>>>({});
 
@@ -335,23 +328,6 @@ export default function TalentForm({
             <FieldError msg={err("Rol")} />
           </div>
 
-          {/* Tecnología */}
-          <div>
-            <label className={labelCls}>
-              Tecnología principal <span className="text-red-500">*</span>
-            </label>
-            <select
-              className={inputCls(err("Tecnologia"))}
-              value={String(form.Tecnologia ?? "")}
-              onChange={(e) => set("Tecnologia", e.target.value)}
-              onBlur={() => touch("Tecnologia")}
-            >
-              <option value="">Seleccionar tecnología…</option>
-              {TECHNOLOGIES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <FieldError msg={err("Tecnologia")} />
-          </div>
-
           {/* Experiencia */}
           <div>
             <label className={labelCls}>
@@ -369,22 +345,6 @@ export default function TalentForm({
             <FieldError msg={err("Experiencia")} />
           </div>
 
-          {/* Skillset */}
-          <div className="md:col-span-2">
-            <label className={labelCls}>
-              Skillset <span className="text-red-500">*</span>
-              <span className="ml-1 font-normal text-slate-400 text-xs">(separado por comas)</span>
-            </label>
-            <textarea
-              className={`${inputCls(err("Skillset"))} h-24 resize-none`}
-              placeholder="React, Tailwind, Node.js, AWS…"
-              value={String(form.Skillset ?? "")}
-              onChange={(e) => set("Skillset", e.target.value)}
-              onBlur={() => touch("Skillset")}
-            />
-            <FieldError msg={err("Skillset")} />
-          </div>
-
           {/* English Level */}
           <div>
             <label className={labelCls}>
@@ -400,7 +360,6 @@ export default function TalentForm({
               onChange={(e) => set("EnglishLevel", e.target.value === "" ? undefined : Number(e.target.value))}
               onBlur={() => touch("EnglishLevel")}
             />
-            {/* Score → CEFR helper */}
             {form.EnglishLevel !== undefined && form.EnglishLevel !== null && (
               <p className="mt-1.5 text-xs text-slate-400">
                 Equivale a:{" "}
@@ -419,25 +378,63 @@ export default function TalentForm({
         </div>
       </Section>
 
+      {/* ── Technology Stack ── */}
+      <Section icon="layers" title="Technology Stack">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          Agrega una o más tecnologías. Si el módulo o submódulo no existe, se creará automáticamente.
+        </p>
+        <StackBuilder
+          value={stack}
+          onChange={(rows) => {
+            setStack(rows);
+            set("Modulos", rows);
+            if (rows.length > 0) set("Tecnologia", rows[0].technology);
+          }}
+        />
+        <FieldError msg={err("Tecnologia")} />
+      </Section>
+
+      {/* ── Resumen / Skills ── */}
+      <Section icon="description" title="Resumen Profesional">
+        <div>
+          <label className={labelCls}>
+            Resumen / Skills <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            className={`${inputCls(err("Skillset"))} h-36 resize-none`}
+            placeholder="Describe brevemente la experiencia, habilidades clave, proyectos destacados y cualquier información relevante del candidato…"
+            value={String(form.Skillset ?? "")}
+            onChange={(e) => set("Skillset", e.target.value)}
+            onBlur={() => touch("Skillset")}
+          />
+          <p className="mt-1.5 text-xs text-slate-400">
+            Este campo se guarda como nota interna del candidato.
+          </p>
+          <FieldError msg={err("Skillset")} />
+        </div>
+      </Section>
+
       {/* ── Expectations & Logistics ── */}
       <Section icon="payments" title="Expectations & Logistics">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          {/* Esquema */}
+          {/* Preferencia de contratación */}
           <div>
             <label className={labelCls}>
-              Esquema de trabajo <span className="text-red-500">*</span>
+              Preferencia de contratación <span className="text-red-500">*</span>
             </label>
             <select
-              className={inputCls(err("Esquema"))}
-              value={form.Esquema ?? ""}
-              onChange={(e) => set("Esquema", e.target.value)}
-              onBlur={() => touch("Esquema")}
+              className={inputCls(err("HiringPreference"))}
+              value={form.HiringPreference ?? ""}
+              onChange={(e) => set("HiringPreference", e.target.value)}
+              onBlur={() => touch("HiringPreference")}
             >
               <option value="">Seleccionar…</option>
-              {WORK_SCHEMES.map((s) => <option key={s} value={s}>{s}</option>)}
+              {hiringPrefs.map((h) => (
+                <option key={h.id} value={h.name}>{h.name}</option>
+              ))}
             </select>
-            <FieldError msg={err("Esquema")} />
+            <FieldError msg={err("HiringPreference")} />
           </div>
 
           {/* Expectativas salariales */}
