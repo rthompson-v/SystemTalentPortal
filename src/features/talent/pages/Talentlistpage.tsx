@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSearchTalent } from "../hooks";
 import TalentLayout from "../components/TalentLayout";
 import TalentTable from "../components/TalentTable";
 import SearchPanel, { type SearchFilters } from "../components/SearchPanel";
+
 import type { Talent } from "../types";
 
 export function TalentListPage() {
   const search = useSearchTalent();
   const [results, setResults]     = useState<Talent[] | null>(null); // null = sin buscar aún
-  const [lastQuery, setLastQuery] = useState<SearchFilters | null>(null);
+  const lastQueryRef = useRef<SearchFilters | null>(null);
 
   // ── Construir query string para el backend ─────────────────────────────────
   function buildQuery(f: SearchFilters): string {
@@ -46,11 +47,10 @@ export function TalentListPage() {
     const isEmpty = Object.values(filters).every((v) => v === "");
     if (isEmpty) {
       setResults(null);
-      setLastQuery(null);
+      lastQueryRef.current = null;
       return;
     }
 
-    setLastQuery(filters);
     const q = buildQuery(filters);
     const res = await search.mutateAsync({ q, limit: 100 });
     setResults(applyClientFilters(res.data, filters));
