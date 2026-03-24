@@ -3,17 +3,13 @@ import { useTechnologies, useModules, useSubmodules } from "../hooks";
 
 export interface SearchFilters {
   q:           string;   // nombre o email (texto libre)
-  skill:       string;   // skill texto libre
-  tecnologia:  string;   // nombre exacto
-  modulo:      string;   // nombre exacto
-  submodulo:   string;   // nombre exacto
+  technologies: string;  // tecnología texto libre
   englishMin:  string;   // 0-100
   englishMax:  string;   // 0-100
 }
 
 const EMPTY: SearchFilters = {
-  q: "", skill: "", tecnologia: "", modulo: "",
-  submodulo: "", englishMin: "", englishMax: "",
+  q: "", technologies: "", englishMin: "", englishMax: "",
 };
 
 interface Props {
@@ -25,44 +21,19 @@ const inputCls = "w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:bor
 const labelCls = "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider";
 
 export default function SearchPanel({ onSearch, isLoading }: Props) {
+
   const [filters, setFilters] = useState<SearchFilters>(EMPTY);
-  const [selectedTechId, setSelectedTechId]     = useState<number | undefined>();
-  const [selectedModuleId, setSelectedModuleId] = useState<number | undefined>();
-
-  const { data: technologies = [] } = useTechnologies();
-  const { data: modules      = [] } = useModules(selectedTechId);
-  const { data: submodules   = [] } = useSubmodules(selectedModuleId);
-
   const set = (key: keyof SearchFilters, value: string) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
-
-  const handleTechChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const name = e.target.value;
-    const tech = technologies.find((t) => t.name === name);
-    set("tecnologia", name);
-    set("modulo", "");
-    set("submodulo", "");
-    setSelectedTechId(tech?.id);
-    setSelectedModuleId(undefined);
-  };
-
-  const handleModuleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const name = e.target.value;
-    const mod  = modules.find((m) => m.name === name);
-    set("modulo", name);
-    set("submodulo", "");
-    setSelectedModuleId(mod?.id);
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(filters);
   };
 
+
   const handleClear = () => {
     setFilters(EMPTY);
-    setSelectedTechId(undefined);
-    setSelectedModuleId(undefined);
     onSearch(EMPTY);
   };
 
@@ -89,7 +60,6 @@ export default function SearchPanel({ onSearch, isLoading }: Props) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-
         {/* Nombre / Email */}
         <div className="sm:col-span-2">
           <label className={labelCls}>Nombre o Email</label>
@@ -107,9 +77,9 @@ export default function SearchPanel({ onSearch, isLoading }: Props) {
           </div>
         </div>
 
-        {/* Skill */}
+        {/* Tecnología */}
         <div>
-          <label className={labelCls}>Skill</label>
+          <label className={labelCls}>Tecnología</label>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 16 }}>
               code
@@ -118,8 +88,8 @@ export default function SearchPanel({ onSearch, isLoading }: Props) {
               className={`${inputCls} pl-9`}
               type="text"
               placeholder="React, AWS, SAP…"
-              value={filters.skill}
-              onChange={(e) => set("skill", e.target.value)}
+              value={filters.technologies}
+              onChange={(e) => set("technologies", e.target.value)}
             />
           </div>
         </div>
@@ -147,58 +117,6 @@ export default function SearchPanel({ onSearch, isLoading }: Props) {
             />
           </div>
         </div>
-
-        {/* Tecnología */}
-        <div>
-          <label className={labelCls}>Tecnología</label>
-          <select
-            className={inputCls}
-            value={filters.tecnologia}
-            onChange={handleTechChange}
-          >
-            <option value="">Todas…</option>
-            {technologies.map((t) => (
-              <option key={t.id} value={t.name}>{t.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Módulo */}
-        <div>
-          <label className={labelCls}>Módulo</label>
-          <select
-            className={inputCls}
-            value={filters.modulo}
-            onChange={handleModuleChange}
-            disabled={!selectedTechId}
-          >
-            <option value="">
-              {selectedTechId ? "Todos…" : "Selecciona tecnología primero"}
-            </option>
-            {modules.map((m) => (
-              <option key={m.id} value={m.name}>{m.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Submódulo */}
-        <div>
-          <label className={labelCls}>Submódulo</label>
-          <select
-            className={inputCls}
-            value={filters.submodulo}
-            onChange={(e) => set("submodulo", e.target.value)}
-            disabled={!selectedModuleId}
-          >
-            <option value="">
-              {selectedModuleId ? "Todos…" : "Selecciona módulo primero"}
-            </option>
-            {submodules.map((s) => (
-              <option key={s.id} value={s.name}>{s.name}</option>
-            ))}
-          </select>
-        </div>
-
       </div>
 
       {/* Actions */}
