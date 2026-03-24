@@ -16,7 +16,7 @@ export function TalentListPage() {
     const parts: string[] = [];
 
     if (f.q.trim()) parts.push(f.q.trim());
-    if (f.technologies.trim()) parts.push(`skills:${f.technologies.trim()}`); // Cambia a skills
+    if (f.technologies.trim()) parts.push(`technologies:${f.technologies.trim()}`); // Cambia a skills
 
     // Inglés: si tienen rango lo convertimos a un valor medio para el sort numérico del backend
     if (f.englishMin.trim() || f.englishMax.trim()) {
