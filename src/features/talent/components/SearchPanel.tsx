@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTechnologies, useModules, useSubmodules } from "../hooks";
+
 
 export interface SearchFilters {
   q:           string;   // nombre o email (texto libre)
