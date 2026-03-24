@@ -84,11 +84,11 @@ export default function TalentTable({ talents }: Props) {
                   {t.years_experience != null ? `${t.years_experience} yr${t.years_experience !== 1 ? "s" : ""}` : "—"}
                 </td>
 
-                {/* Tech Stack / Skillset */}
+                  {/* Tech Stack / Technologies */}
                 <td className="px-4 py-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    {t.skillset
-                      ? t.skillset.split(",").slice(0, 3).map((s) => (
+                  <div className="flex flex-wrap gap-1.5   p-1.5">
+                    {t.technologies
+                      ? t.technologies.split(",").slice(0, 3).map((s) => (
                           <span key={s} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-medium border border-slate-200 dark:border-slate-700">
                             {s.trim()}
                           </span>

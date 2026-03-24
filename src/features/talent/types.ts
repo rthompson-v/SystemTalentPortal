@@ -8,6 +8,7 @@ export interface Talent {
   location?:            string;
   years_experience?:    number;
   skillset?:            string;
+  technologies?:        string;
   english_score?:       number;  // 0-100
   linkedin?:            string;
   cv?:                  string;
