@@ -19,11 +19,11 @@ export function TalentListPage() {
     if (f.technologies.trim()) parts.push(`technologies:${f.technologies.trim()}`); // Cambia a skills
 
     // Inglés: si tienen rango lo convertimos a un valor medio para el sort numérico del backend
-    if (f.englishMin.trim() || f.englishMax.trim()) {
-      const min = Number(f.englishMin) || 0;
-      const max = Number(f.englishMax) || 100;
-      parts.push(`english:${Math.round((min + max) / 2)}`);
-    }
+    // if (f.englishMin.trim() || f.englishMax.trim()) {
+    //   const min = Number(f.englishMin) || 0;
+    //   const max = Number(f.englishMax) || 100;
+    //   parts.push(`english:${Math.round((min + max) / 2)}`);
+    // }
 
     return parts.join(" ");
   }
@@ -36,11 +36,11 @@ export function TalentListPage() {
       const score = t.english_score ?? null;
       if (score === null && (f.englishMin !== "" || f.englishMax !== "")) return false;
       if (score !== null && (score < min || score > max)) return false;
-      // Filtro de skills en cliente (por si el backend no filtra bien)
+      // Filtro de tecnologías en cliente (por si el backend no filtra bien)
       if (f.technologies && f.technologies.trim() !== "") {
         const techs = f.technologies.toLowerCase().split(",").map(s => s.trim());
-        const candidateSkills = (t.skillset || "").toLowerCase();
-        if (!techs.every(tech => candidateSkills.includes(tech))) return false;
+        const candidateTechs = (t.technologies || "").toLowerCase();
+        if (!techs.every(tech => candidateTechs.includes(tech))) return false;
       }
       return true;
     });
