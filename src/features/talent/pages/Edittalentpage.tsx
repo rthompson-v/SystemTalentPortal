@@ -53,22 +53,31 @@ export function EditTalentPage() {
 
   const { data: rawTalent, isLoading, isError } = useTalent(candidate_code);
 
-  // getCandidateByCode devuelve { candidate, stack, lastSkillset, lastVisa, lastCompensation }
-  // Normalizamos para tener un objeto plano compatible con el formulario
-  const talent = rawTalent
-    ? {
-        ...(rawTalent as any).candidate,
-        skillset:          (rawTalent as any).lastSkillset?.note_text      ?? (rawTalent as any).skillset,
-        hiring_preference: (rawTalent as any).candidate?.hiring_preference ?? (rawTalent as any).hiring_preference,
-        costo_expectativa: (rawTalent as any).lastCompensation?.cost_text  ?? (rawTalent as any).costo_expectativa,
-        // stack viene como array de objetos, lo convertimos a ModuloInput[]
-        _stack: ((rawTalent as any).stack ?? []).map((s: any) => ({
-          technology: s.technology_name,
-          module:     s.module_name     || undefined,
-          submodule:  s.submodule_name  || undefined,
-        })),
-      }
-    : null;
+  // getCandidateByCode devuelve: { ok, data: { candidate, stack, lastSkillset, lastCompensation } }
+  // El hook puede devolver la respuesta completa o ya desenvuelta (.data). Manejamos ambos casos.
+  const talent = (() => {
+    if (!rawTalent) return null;
+    const r = rawTalent as any;
+    // Desenvuelve .data si el hook no lo hizo
+    const nested   = r?.data ?? r;
+    // Extrae .candidate si existe, o usa el objeto directamente (respuesta plana)
+    const cand     = nested?.candidate ?? nested;
+    const stackArr: any[] = nested?.stack ?? [];
+
+    return {
+      ...cand,
+      skillset:          nested?.lastSkillset?.note_text    ?? cand?.skillset           ?? "",
+      costo_expectativa: nested?.lastCompensation?.cost_text ?? cand?.costo_expectativa ?? "",
+      hiring_preference: cand?.hiring_preference             ?? "",
+      _stack: stackArr
+        .map((s: any) => ({
+          technology: s.technology_name ?? s.technology ?? "",
+          module:     s.module_name     ?? s.module     ?? undefined,
+          submodule:  s.submodule_name  ?? s.submodule  ?? undefined,
+        }))
+        .filter((s: any) => Boolean(s.technology)),
+    };
+  })();
   const update                               = useUpdateTalent(candidate_code);
   const { data: hiringPrefs = [] }           = useHiringPreferences();
 
@@ -100,6 +109,8 @@ export function EditTalentPage() {
       Name:             fd.get("Name")         as string || undefined,
       Telefono:         fd.get("Telefono")      as string || undefined,
       Email:            fd.get("Email")         as string || undefined,
+      CV:               fd.get("CV")            as string || undefined,
+      Linkedin:         fd.get("Linkedin")      as string || undefined,
       Location:         fd.get("Location")      as string || undefined,
       Rol:              fd.get("Rol")           as string || undefined,
       Experiencia:      fd.get("Experiencia")   ? Number(fd.get("Experiencia"))   : undefined,
@@ -204,6 +215,13 @@ export function EditTalentPage() {
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }}>link</span>
                   <input name="Linkedin" defaultValue={talent.linkedin ?? ""} className={`${inputCls} pl-10`} type="url" />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>CV (URL)</label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }}>description</span>
+                  <input name="CV" defaultValue={talent.cv ?? talent.cv_url ?? ""} className={`${inputCls} pl-10`} type="url" placeholder="https://drive.google.com/…" />
                 </div>
               </div>
             </div>
