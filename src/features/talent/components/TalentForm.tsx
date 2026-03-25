@@ -161,7 +161,7 @@ function validate(form: CreateTalent): Errors {
   if (!form.Rol?.trim())                             e.Rol          = "El rol es requerido";
   if (!form.Location?.trim())                        e.Location     = "La ubicación es requerida";
   if (!form.Skillset || String(form.Skillset).trim() === "") e.Skillset = "El skillset es requerido";
-  if (!form.Tecnologia || String(form.Tecnologia).trim() === "") e.Tecnologia = "La tecnología es requerida";
+  if (!form.Modulos || (form.Modulos as ModuloInput[]).length === 0) e.Tecnologia = "Agrega al menos una tecnología al stack";
   if (form.EnglishLevel === undefined || form.EnglishLevel === null || String(form.EnglishLevel) === "")
     e.EnglishLevel = "El nivel de inglés es requerido";
   else if (Number(form.EnglishLevel) < 0 || Number(form.EnglishLevel) > 100)
@@ -211,7 +211,13 @@ export default function TalentForm({
       setTouched(allTouched);
       return;
     }
-    onSubmit(form);
+    // Aseguramos que Tecnologia sea el array de nombres del stack
+    const finalData: CreateTalent = {
+      ...form,
+      Tecnologia: stack.map((r) => r.technology),
+      Modulos: stack,
+    };
+    onSubmit(finalData);
   };
 
   const err = (key: keyof CreateTalent) => (touched[key] ? errors[key] : undefined);
@@ -298,8 +304,25 @@ export default function TalentForm({
                 className={`${inputCls()} pl-10`}
                 type="url"
                 placeholder="https://linkedin.com/in/username"
-                value={form.CV ?? ""}
+                value={form.Linkedin ?? ""}
                 onChange={(e) => set("Linkedin", e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* CV */}
+          <div>
+            <label className={labelCls}>CV (URL)</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }}>
+                description
+              </span>
+              <input
+                className={`${inputCls()} pl-10`}
+                type="url"
+                placeholder="https://drive.google.com/…"
+                value={form.CV ?? ""}
+                onChange={(e) => set("CV", e.target.value)}
               />
             </div>
           </div>

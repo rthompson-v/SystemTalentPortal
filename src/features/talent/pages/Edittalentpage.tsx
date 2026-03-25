@@ -51,7 +51,24 @@ export function EditTalentPage() {
   const { id: candidate_code = "" } = useParams<{ id: string }>();
   const navigate  = useNavigate();
 
-  const { data: talent, isLoading, isError } = useTalent(candidate_code);
+  const { data: rawTalent, isLoading, isError } = useTalent(candidate_code);
+
+  // getCandidateByCode devuelve { candidate, stack, lastSkillset, lastVisa, lastCompensation }
+  // Normalizamos para tener un objeto plano compatible con el formulario
+  const talent = rawTalent
+    ? {
+        ...(rawTalent as any).candidate,
+        skillset:          (rawTalent as any).lastSkillset?.note_text      ?? (rawTalent as any).skillset,
+        hiring_preference: (rawTalent as any).candidate?.hiring_preference ?? (rawTalent as any).hiring_preference,
+        costo_expectativa: (rawTalent as any).lastCompensation?.cost_text  ?? (rawTalent as any).costo_expectativa,
+        // stack viene como array de objetos, lo convertimos a ModuloInput[]
+        _stack: ((rawTalent as any).stack ?? []).map((s: any) => ({
+          technology: s.technology_name,
+          module:     s.module_name     || undefined,
+          submodule:  s.submodule_name  || undefined,
+        })),
+      }
+    : null;
   const update                               = useUpdateTalent(candidate_code);
   const { data: hiringPrefs = [] }           = useHiringPreferences();
 
@@ -60,13 +77,18 @@ export function EditTalentPage() {
   const [skillset, setSkillset]             = useState("");
   const [hiringPref, setHiringPref]         = useState("");
   const [englishScore, setEnglishScore]     = useState<string>("");
-  const [initialized, setInitialized]       = useState(false);
+  const [stackModified, setStackModified] = useState(false);
+  const [initialized, setInitialized]     = useState(false);
 
   // Inicializar cuando llegan los datos del candidato
   if (talent && !initialized) {
     setSkillset(talent.skillset ?? "");
     setEnglishScore(String(talent.english_score ?? ""));
     setHiringPref(talent.hiring_preference ?? "");
+    // Cargar stack existente del candidato
+    if (talent._stack?.length > 0) {
+      setStack(talent._stack);
+    }
     setInitialized(true);
   }
 
@@ -87,9 +109,9 @@ export function EditTalentPage() {
       HiringPreference: hiringPref              || undefined,
       Skillset:         skillset                || undefined,
       // Stack: solo enviar si el usuario modificó algo
-      ...(stack.length > 0 && {
-        Tecnologia:  stack[0].technology,
-        Modulos:     stack,
+      ...(stackModified && stack.length > 0 && {
+        Tecnologia:   stack.map((r) => r.technology),
+        Modulos:      stack,
         replaceStack: true,
       }),
     };
@@ -192,7 +214,7 @@ export function EditTalentPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className={labelCls}>Rol Principal</label>
-                <select name="Rol" className={inputCls} defaultValue={talent.Rol ?? ""}>
+                <select name="Rol" className={inputCls} defaultValue={(talent as any).role ?? talent.Rol ?? ""}>
                   <option value="">Seleccionar rol…</option>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
@@ -242,9 +264,9 @@ export function EditTalentPage() {
             </p>
             <StackBuilder
               value={stack}
-              onChange={(rows) => setStack(rows)}
+              onChange={(rows) => { setStack(rows); setStackModified(true); }}
             />
-            {stack.length > 0 && (
+            {stackModified && stack.length > 0 && (
               <p className="mt-3 text-xs text-amber-500 dark:text-amber-400 flex items-center gap-1.5">
                 <span className="material-symbols-outlined" style={{ fontSize: 14 }}>warning</span>
                 Al guardar, el stack actual del candidato será reemplazado por estas entradas.
