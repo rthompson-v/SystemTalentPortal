@@ -192,7 +192,7 @@ export function EditTalentPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className={labelCls}>Rol Principal</label>
-                <select name="Rol" className={inputCls} defaultValue="">
+                <select name="Rol" className={inputCls} defaultValue={talent.role ?? ""}>
                   <option value="">Seleccionar rol…</option>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>

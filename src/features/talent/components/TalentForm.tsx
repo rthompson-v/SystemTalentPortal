@@ -299,7 +299,7 @@ export default function TalentForm({
                 type="url"
                 placeholder="https://linkedin.com/in/username"
                 value={form.CV ?? ""}
-                onChange={(e) => set("CV", e.target.value)}
+                onChange={(e) => set("Linkedin", e.target.value)}
               />
             </div>
           </div>
@@ -388,7 +388,7 @@ export default function TalentForm({
           onChange={(rows) => {
             setStack(rows);
             set("Modulos", rows);
-            if (rows.length > 0) set("Tecnologia", rows[0].technology);
+            set("Tecnologia", rows.map(r => r.technology));
           }}
         />
         <FieldError msg={err("Tecnologia")} />

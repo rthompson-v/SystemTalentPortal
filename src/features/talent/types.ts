@@ -16,6 +16,7 @@ export interface Talent {
   costo_expectativa?:   string;
   last_update?:         string;
   hiring_preference?:   string;
+  Rol?:                 string; // Agregado para compatibilidad con el formulario
 }
 
 // ── Payload búsqueda avanzada (POST /candidates/search) ───────────────────────
