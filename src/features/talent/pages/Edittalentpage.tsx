@@ -58,17 +58,38 @@ export function EditTalentPage() {
   const talent = (() => {
     if (!rawTalent) return null;
     const r = rawTalent as any;
-    // Desenvuelve .data si el hook no lo hizo
-    const nested   = r?.data ?? r;
-    // Extrae .candidate si existe, o usa el objeto directamente (respuesta plana)
+
+    // El backend devuelve: { ok: true, data: { candidate, stack, lastCompensation, lastSkillset? } }
+    // El hook puede ya haber desenvuelto .data o no — manejamos ambos casos
+    const nested   = r?.data        ?? r;
     const cand     = nested?.candidate ?? nested;
     const stackArr: any[] = nested?.stack ?? [];
 
+    // location y role llegan como IDs en el objeto candidate — los nombres string
+    // vienen de la vista v_candidate_profile (candidateSearch). Para editar usamos
+    // los campos de nombre si existen, o dejamos vacío para que el usuario los seleccione.
+    const locationName = cand?.location_name ?? cand?.location ?? "";
+    const roleName     = cand?.role_name     ?? cand?.role     ?? "";
+
+    // skillset: puede venir en lastSkillset.note_text o directo en candidate.skillset
+    const skillsetVal  = nested?.lastSkillset?.note_text ?? cand?.skillset ?? "";
+
+    // costo_expectativa: viene en lastCompensation.cost_text
+    const costoVal     = nested?.lastCompensation?.cost_text ?? cand?.costo_expectativa ?? "";
+
+    // last_update: la tabla usa updated_at
+    const lastUpdate   = cand?.last_update ?? cand?.updated_at ?? null;
+
     return {
       ...cand,
-      skillset:          nested?.lastSkillset?.note_text    ?? cand?.skillset           ?? "",
-      costo_expectativa: nested?.lastCompensation?.cost_text ?? cand?.costo_expectativa ?? "",
-      hiring_preference: cand?.hiring_preference             ?? "",
+      location:          locationName,
+      Rol:               roleName,
+      skillset:          skillsetVal,
+      costo_expectativa: costoVal,
+      hiring_preference: cand?.hiring_preference ?? "",
+      last_update:       lastUpdate,
+      // cv_url es el campo en BD, también soportamos cv
+      cv:                cand?.cv_url ?? cand?.cv ?? "",
       _stack: stackArr
         .map((s: any) => ({
           technology: s.technology_name ?? s.technology ?? "",
@@ -89,14 +110,13 @@ export function EditTalentPage() {
   const [stackModified, setStackModified] = useState(false);
   const [initialized, setInitialized]     = useState(false);
 
-  // Inicializar cuando llegan los datos del candidato
+  // Inicializar estado controlado cuando llegan los datos
   if (talent && !initialized) {
     setSkillset(talent.skillset ?? "");
-    setEnglishScore(String(talent.english_score ?? ""));
+    setEnglishScore(talent.english_score != null ? String(talent.english_score) : "");
     setHiringPref(talent.hiring_preference ?? "");
-    // Cargar stack existente del candidato
-    if (talent._stack?.length > 0) {
-      setStack(talent._stack);
+    if ((talent._stack ?? []).length > 0) {
+      setStack(talent._stack!);
     }
     setInitialized(true);
   }
@@ -221,7 +241,7 @@ export function EditTalentPage() {
                 <label className={labelCls}>CV (URL)</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }}>description</span>
-                  <input name="CV" defaultValue={talent.cv ?? talent.cv_url ?? ""} className={`${inputCls} pl-10`} type="url" placeholder="https://drive.google.com/…" />
+                  <input name="CV" defaultValue={talent.cv ?? ""} className={`${inputCls} pl-10`} type="url" placeholder="https://drive.google.com/…" />
                 </div>
               </div>
             </div>
@@ -232,7 +252,7 @@ export function EditTalentPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className={labelCls}>Rol Principal</label>
-                <select name="Rol" className={inputCls} defaultValue={(talent as any).role ?? talent.Rol ?? ""}>
+                <select name="Rol" className={inputCls} defaultValue={talent.Rol ?? ""}>
                   <option value="">Seleccionar rol…</option>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
