@@ -1,5 +1,5 @@
 // features/auth/api.ts
-import { supabase } from "../../../supabaseClient";
+import { supabase } from "../../Supabaseclient";
 import type { LoginRequest, LoginResponse } from "./types";
 
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {

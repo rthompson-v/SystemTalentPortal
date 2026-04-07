@@ -2,7 +2,7 @@
 // Si zustand no está instalado: npm install zustand
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { supabase } from "../../../supabaseClient";
+import { supabase } from "../../Supabaseclient";
 
 interface UserInfo {
   USER_CLP: string;

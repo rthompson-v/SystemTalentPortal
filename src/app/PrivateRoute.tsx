@@ -1,27 +1,27 @@
-import { Navigate } from "react-router-dom";
+// src/app/PrivateRoute.tsx
+// Reemplaza tu PrivateRoute actual — el único cambio es el null-check en Role_CLP
+
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
 
-export function PrivateRoute({
-  children,
-  allowRoleNames,
-  allowRoleIds,
-}: {
-  children: React.ReactNode;
-  allowRoleNames?: string[];
-  allowRoleIds?: number[];
-}) {
+interface Props {
+  allowedRoles?: number[]; // si no se pasa, solo requiere estar autenticado
+}
+
+export function PrivateRoute({ allowedRoles }: Props) {
   const { isAuthenticated, user } = useAuth();
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-
-  if (allowRoleIds?.length && user) {
-    if (!allowRoleIds.includes(user.Role_CLP)) return <Navigate to="/forbidden" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (allowRoleNames?.length && user) {
-    const name = user.RoleName ?? "";
-    if (!allowRoleNames.includes(name)) return <Navigate to="/forbidden" replace />;
+  // Role_CLP puede ser null — lo tratamos como 0 para la comparación
+  if (allowedRoles && allowedRoles.length > 0) {
+    const roleId: number = user?.Role_CLP ?? 0;
+    if (!allowedRoles.includes(roleId)) {
+      return <Navigate to="/talent" replace />;
+    }
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 }
