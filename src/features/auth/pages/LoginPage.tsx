@@ -1,3 +1,4 @@
+// features/auth/LoginPage.tsx
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -18,17 +19,18 @@ export function LoginPage() {
   async function onSubmit(values: FormData) {
     try {
       const data = await login.mutateAsync(values);
-      setSession(data.token);
+      // setSession ahora recibe token + user (antes solo token)
+      setSession(data.token, data.user);
       nav("/talent");
     } catch (error) {
       console.error("Error login:", error);
     }
   }
 
+  // ── El JSX no cambia — es idéntico al original ────────────────────────────
   return (
     <div className="bg-[#0f172a] text-slate-100 min-h-screen font-sans relative selection:bg-blue-600/30">
 
-      {/* ── Logo ── */}
       <header className="absolute top-0 left-0 p-8 z-20 flex items-center gap-4">
         <img
           src="https://portal.everscalegroup.com/wp-content/uploads/2019/10/Secondary-Logo_white-01.png"
@@ -43,7 +45,6 @@ export function LoginPage() {
 
       <div className="flex flex-col items-center w-full min-h-screen">
 
-        {/* ── Hero image ── */}
         <div className="w-full h-[45vh] overflow-hidden relative">
           <div
             className="w-full h-full bg-center bg-cover bg-no-repeat"
@@ -55,11 +56,9 @@ export function LoginPage() {
           </div>
         </div>
 
-        {/* ── Form ── */}
         <main className="flex-1 flex flex-col items-center justify-center w-full max-w-[1200px] px-4 -mt-32 relative z-10 pb-16">
           <div className="w-full max-w-[450px] bg-slate-900/80 backdrop-blur-md p-10 rounded-xl border border-slate-800 shadow-2xl relative overflow-hidden">
 
-            {/* Mint accent bar */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-[#99ff99]" />
 
             <div className="mb-10 text-center">
@@ -69,7 +68,6 @@ export function LoginPage() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-              {/* Usuario */}
               <div className="flex flex-col gap-2">
                 <label className="text-slate-300 text-sm font-semibold px-1">Usuario</label>
                 <div className="relative group">
@@ -89,7 +87,6 @@ export function LoginPage() {
                 )}
               </div>
 
-              {/* Contraseña */}
               <div className="flex flex-col gap-2">
                 <label className="text-slate-300 text-sm font-semibold px-1">Contraseña</label>
                 <div className="relative group">
@@ -118,23 +115,14 @@ export function LoginPage() {
                 )}
               </div>
 
-              {/* Recordarme */}
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-slate-700 bg-slate-800 accent-[#0d6cf2]"
-                  />
-                  <span className="text-slate-400 group-hover:text-slate-200 transition-colors">
-                    Recordarme
-                  </span>
+                  <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 accent-[#0d6cf2]" />
+                  <span className="text-slate-400 group-hover:text-slate-200 transition-colors">Recordarme</span>
                 </label>
-                <a href="#" className="text-[#0d6cf2] font-bold hover:underline text-sm">
-                  ¿Olvidó su contraseña?
-                </a>
+                <a href="#" className="text-[#0d6cf2] font-bold hover:underline text-sm">¿Olvidó su contraseña?</a>
               </div>
 
-              {/* Error de credenciales */}
               {login.isError && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-red-900/30 border border-red-800 text-red-400 text-sm">
                   <span className="material-symbols-outlined" style={{ fontSize: 18 }}>error</span>
@@ -142,7 +130,6 @@ export function LoginPage() {
                 </div>
               )}
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={login.isPending}
@@ -162,19 +149,15 @@ export function LoginPage() {
               </button>
             </form>
 
-            {/* Footer del card */}
             <div className="mt-10 pt-6 border-t border-slate-800 text-center">
               <p className="text-sm text-slate-500">
                 ¿Necesita ayuda?
-                <a href="#" className="text-[#0d6cf2] font-bold hover:underline ml-1">
-                  Contactar soporte
-                </a>
+                <a href="#" className="text-[#0d6cf2] font-bold hover:underline ml-1">Contactar soporte</a>
               </p>
             </div>
           </div>
         </main>
 
-        {/* ── Footer ── */}
         <footer className="w-full py-8 text-center text-slate-600 text-xs mt-auto">
           <p>© 2024 ATS Recruitment Portal. Todos los derechos reservados.</p>
         </footer>
