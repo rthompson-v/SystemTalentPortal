@@ -16,16 +16,16 @@ export function LoginPage() {
   const login = useMutation({ mutationFn: loginApi });
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
 
-  async function onSubmit(values: FormData) {
-    try {
-      const data = await login.mutateAsync(values);
-      // setSession ahora recibe token + user (antes solo token)
-      setSession(data.token, data.user);
-      nav("/talent");
-    } catch (error) {
-      console.error("Error login:", error);
-    }
+ async function onSubmit(values: FormData) {
+  try {
+    const data = await login.mutateAsync(values);
+    console.log("LOGIN DATA:", data); // ← agrega esto
+    setSession(data.token, data.user);
+    nav("/talent");
+  } catch (error) {
+    console.error("Error login:", error);
   }
+}
 
   // ── El JSX no cambia — es idéntico al original ────────────────────────────
   return (

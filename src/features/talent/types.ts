@@ -23,6 +23,7 @@ export interface Talent {
 export interface SearchPayload {
   q?:            string;   // texto libre
   limit?:        number;
+  tech?:         string;   // filtro de tecnología (nuevo campo)
 }
 
 // ── Payload para POST /candidates (Alta) ─────────────────────────────────────
