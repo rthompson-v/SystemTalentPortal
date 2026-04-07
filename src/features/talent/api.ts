@@ -3,7 +3,7 @@
 // Catálogos: supabase.from()   → API REST auto-generada (lectura directa)
 // Operaciones complejas: supabase.rpc() → procedimientos almacenados
 
-import { supabase } from "../../Supabaseclient";
+import { supabase } from "../../../SupabaseClient";
 import { useAuth } from "../auth/useAuth";
 import type {
   Talent, CreateTalent, UpdateTalent, CatalogItem,
