@@ -3,26 +3,28 @@ import { supabase } from "../../../SupabaseClient";
 import type { LoginRequest, LoginResponse } from "./types";
 
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
-  // 1) Supabase Auth — necesita email. Si el USER_CLP no tiene @,
-  //    lo buscamos en la tabla Usuario para obtener el email real.
-  let email = payload.USER_CLP;
+  // 1) Buscar auth_id del usuario por USER_CLP (la tabla Usuario no tiene email)
+  const { data: userRow, error: lookupErr } = await supabase
+    .from("Usuario")
+    .select("auth_id")
+    .eq("USER_CLP", payload.USER_CLP)
+    .single();
 
-  if (!payload.USER_CLP.includes("@")) {
-    const { data: userRow, error: lookupErr } = await supabase
-      .from("Usuario")
-      .select("email")
-      .eq("USER_CLP", payload.USER_CLP)
-      .single();
-
-    if (lookupErr || !userRow?.email) {
-      throw new Error("Credenciales inválidas");
-    }
-    email = userRow.email;
+  if (lookupErr || !userRow?.auth_id) {
+    throw new Error("Credenciales inválidas");
   }
 
-  // 2) Sign in con Supabase Auth (maneja bcrypt internamente)
+  // 2) Obtener el email real desde auth.users via RPC
+  const { data: emailData, error: emailErr } = await supabase
+    .rpc("get_user_email_by_auth_id", { p_auth_id: userRow.auth_id });
+
+  if (emailErr || !emailData) {
+    throw new Error("Credenciales inválidas");
+  }
+
+  // 3) Sign in con Supabase Auth usando el email real
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email:    emailData as string,
     password: payload.PASS_CLP,
   });
 
@@ -30,7 +32,7 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
     throw new Error("Credenciales inválidas");
   }
 
-  // 3) Obtener rol del usuario desde tu tabla personalizada
+  // 4) Obtener rol
   const { data: roleData } = await supabase.rpc("get_user_role", {
     p_user_clp: payload.USER_CLP,
   });
