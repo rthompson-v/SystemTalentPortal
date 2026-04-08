@@ -4,6 +4,7 @@ import { LoginPage }      from "../features/auth/pages/LoginPage";
 import { TalentListPage } from "../features/talent/pages/Talentlistpage";
 import { AddTalentPage }  from "../features/talent/pages/Addtalentpage";
 import { EditTalentPage } from "../features/talent/pages/Edittalentpage";
+import PipelinePage       from "../features/pipeline/pages/PipelinePage";
 
 // ── PrivateRoute usando Zustand (useAuth) en lugar de authStorage ─────────────
 function PrivateRoute() {
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
       {
         path: "/talent/edit/:id",
         element: <EditTalentPage />,
+      },
+      {
+        path: "/pipeline",
+        element: <PipelinePage />,
       },
     ],
   },

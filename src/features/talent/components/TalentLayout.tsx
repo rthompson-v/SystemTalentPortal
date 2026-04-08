@@ -5,6 +5,7 @@ import { useAuth } from "../../auth/useAuth";
 const NAV_ITEMS = [
   { to: "/dashboard",  icon: "dashboard",      label: "Dashboard",   disabled: true  },
   { to: "/talent",     icon: "groups",         label: "Talent Pool", disabled: false },
+  { to: "/pipeline",   icon: "view_kanban",    label: "Pipeline",    disabled: false },
   { to: "/jobs",       icon: "work",           label: "Jobs",        disabled: true  },
   { to: "/interviews", icon: "calendar_today", label: "Interviews",  disabled: true  },
 ];
