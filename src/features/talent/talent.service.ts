@@ -1,22 +1,9 @@
-// features/talent/api.ts
+// features/talent/talent.service.ts
 import { supabase } from "../../../SupabaseClient";
-import { useAuth } from "../auth/useAuth";
 import type {
   Talent, CreateTalent, UpdateTalent, CatalogItem,
   PaginatedResponse, SearchPayload, SearchResponse,
 } from "./types";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function getRoleId(): number {
-  const user = useAuth.getState().user;
-  return user?.Role_CLP ?? 0;
-}
-
-function assertRpc(data: unknown, error: unknown, label: string) {
-  if (error) throw new Error(`${label}: ${(error as { message: string }).message}`);
-  if ((data as { ok?: boolean })?.ok === false)
-    throw new Error(`${label}: ${(data as { error?: string }).error ?? "Error desconocido"}`);
-}
 
 // ── Interfaces para catálogos ─────────────────────────────────────────────────
 interface RoleRow       { role_id: number;              name: string }
@@ -26,40 +13,46 @@ interface HiringPrefRow { hiring_preference_id: number; name: string }
 interface ModuleRow     { module_id: number;            module_catalogname: string }
 interface SubmoduleRow  { submodule_id: number;         subm_catalog_name: string }
 
+function assertRpc(data: unknown, error: unknown, label: string) {
+  if (error) throw new Error(`${label}: ${(error as { message: string }).message}`);
+  if ((data as { ok?: boolean })?.ok === false)
+    throw new Error(`${label}: ${(data as { error?: string }).error ?? "Error desconocido"}`);
+}
+
 // ── Lista paginada ────────────────────────────────────────────────────────────
-export async function listTalentApi(page = 1, limit = 20): Promise<PaginatedResponse> {
+export async function listTalents(roleId: number, page = 1, limit = 20): Promise<PaginatedResponse> {
   const { data, error } = await supabase.rpc("profile_view_by_role", {
-    p_role_id: getRoleId(),
+    p_role_id: roleId,
     p_limit:   limit,
     p_page:    page,
   });
-  assertRpc(data, error, "listTalentApi");
+  assertRpc(data, error, "listTalents");
   return data as PaginatedResponse;
 }
 
 // ── Búsqueda ──────────────────────────────────────────────────────────────────
-export async function searchTalentApi(payload: SearchPayload & { tech?: string }): Promise<SearchResponse> {
+export async function searchTalents(roleId: number, payload: SearchPayload & { tech?: string }): Promise<SearchResponse> {
   const { data, error } = await supabase.rpc("search_candidates", {
     p_q:       payload.q     ?? "",
     p_limit:   payload.limit ?? 50,
-    p_role_id: getRoleId(),
+    p_role_id: roleId,
     p_tech:    payload.tech  ?? "",
   });
-  assertRpc(data, error, "searchTalentApi");
+  assertRpc(data, error, "searchTalents");
   return data as SearchResponse;
 }
 
 // ── Detalle ───────────────────────────────────────────────────────────────────
-export async function getTalentApi(candidate_code: string): Promise<Talent> {
+export async function getTalent(candidate_code: string): Promise<Talent> {
   const { data, error } = await supabase.rpc("get_candidate_by_code", {
     p_candidate_code: candidate_code,
   });
-  assertRpc(data, error, "getTalentApi");
+  assertRpc(data, error, "getTalent");
   return (data as { data: Talent }).data;
 }
 
 // ── Crear ─────────────────────────────────────────────────────────────────────
-export async function createTalentApi(payload: CreateTalent): Promise<{ candidate_id: number; candidate_code: string }> {
+export async function createTalent(payload: CreateTalent): Promise<{ candidate_id: number; candidate_code: string }> {
   const { data, error } = await supabase.rpc("add_candidate_full", {
     p_data: {
       Name:             payload.Name,
@@ -77,12 +70,12 @@ export async function createTalentApi(payload: CreateTalent): Promise<{ candidat
       Modulos:          Array.isArray(payload.Modulos) ? payload.Modulos : [],
     },
   });
-  assertRpc(data, error, "createTalentApi");
+  assertRpc(data, error, "createTalent");
   return data as { candidate_id: number; candidate_code: string };
 }
 
 // ── Actualizar ────────────────────────────────────────────────────────────────
-export async function updateTalentApi(
+export async function updateTalent(
   candidate_code: string,
   payload: UpdateTalent
 ): Promise<{ ok: boolean; message: string }> {
@@ -105,40 +98,40 @@ export async function updateTalentApi(
                         : payload.Tecnologia ? [payload.Tecnologia] : null,
     p_replace_stack:  payload.replaceStack     ?? false,
   });
-  assertRpc(data, error, "updateTalentApi");
+  assertRpc(data, error, "updateTalent");
   return data as { ok: boolean; message: string };
 }
 
 // ── Catálogos ─────────────────────────────────────────────────────────────────
-export async function getRolesApi(): Promise<CatalogItem[]> {
+export async function getRoles(): Promise<CatalogItem[]> {
   const { data, error } = await supabase
     .from("catalog_role").select("role_id, name").order("name");
   if (error) throw new Error(error.message);
   return (data as RoleRow[] ?? []).map((r) => ({ id: r.role_id, name: r.name }));
 }
 
-export async function getLocationsApi(): Promise<CatalogItem[]> {
+export async function getLocations(): Promise<CatalogItem[]> {
   const { data, error } = await supabase
     .from("catalog_location").select("location_id, name").order("name");
   if (error) throw new Error(error.message);
   return (data as LocationRow[] ?? []).map((r) => ({ id: r.location_id, name: r.name }));
 }
 
-export async function getTechnologiesApi(): Promise<CatalogItem[]> {
+export async function getTechnologies(): Promise<CatalogItem[]> {
   const { data, error } = await supabase
     .from("catalog_technology").select("technology_id, ct_name_tech").order("ct_name_tech");
   if (error) throw new Error(error.message);
   return (data as TechnologyRow[] ?? []).map((r) => ({ id: r.technology_id, name: r.ct_name_tech }));
 }
 
-export async function getHiringPreferencesApi(): Promise<CatalogItem[]> {
+export async function getHiringPreferences(): Promise<CatalogItem[]> {
   const { data, error } = await supabase
     .from("catalog_hiring_preference").select("hiring_preference_id, name").order("hiring_preference_id");
   if (error) throw new Error(error.message);
   return (data as HiringPrefRow[] ?? []).map((r) => ({ id: r.hiring_preference_id, name: r.name }));
 }
 
-export async function getModulesApi(technology_id: number): Promise<CatalogItem[]> {
+export async function getModules(technology_id: number): Promise<CatalogItem[]> {
   const { data, error } = await supabase
     .from("catalog_module").select("module_id, module_catalogname")
     .eq("technology_id", technology_id).order("module_catalogname");
@@ -146,7 +139,7 @@ export async function getModulesApi(technology_id: number): Promise<CatalogItem[
   return (data as ModuleRow[] ?? []).map((r) => ({ id: r.module_id, name: r.module_catalogname }));
 }
 
-export async function getSubmodulesApi(module_id: number): Promise<CatalogItem[]> {
+export async function getSubmodules(module_id: number): Promise<CatalogItem[]> {
   const { data, error } = await supabase
     .from("catalog_submodule").select("submodule_id, subm_catalog_name")
     .eq("module_id", module_id).order("subm_catalog_name");

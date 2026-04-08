@@ -1,9 +1,9 @@
-// features/auth/api.ts
+// features/auth/auth.service.ts
 import { supabase } from "../../../SupabaseClient";
 import type { LoginRequest, LoginResponse } from "./types";
 
-export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
-  // 1) Buscar auth_id del usuario por USER_CLP (la tabla Usuario no tiene email)
+export async function login(payload: LoginRequest): Promise<LoginResponse> {
+  // 1) Buscar auth_id del usuario por USER_CLP
   const { data: userRow, error: lookupErr } = await supabase
     .from("Usuario")
     .select("auth_id")
@@ -50,6 +50,6 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   };
 }
 
-export async function logoutApi(): Promise<void> {
+export async function logout(): Promise<void> {
   await supabase.auth.signOut();
 }

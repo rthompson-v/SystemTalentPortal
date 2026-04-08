@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { loginApi } from "../api";
+import { login as loginApi } from "../auth.service";
 import { useAuth } from "../useAuth";
 
 type FormData = { USER_CLP: string; PASS_CLP: string };
